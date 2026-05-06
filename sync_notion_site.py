@@ -409,6 +409,7 @@ def build_assets() -> None:
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     if BRAND_ICON_SOURCE.exists():
+        shutil.copyfile(BRAND_ICON_SOURCE, MEDIA_DIR / 'rocky-home-icon.svg')
         shutil.copyfile(BRAND_ICON_SOURCE, MEDIA_DIR / 'rocky-home-icon.jpeg')
     css = """
 :root {
