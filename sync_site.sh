@@ -5,6 +5,7 @@ ROOT_DIR="/mnt/d/Woolito Animation Dropbox/0_Woolito Animation Team Folder/Rocky
 cd "$ROOT_DIR"
 
 export PATH="$HOME/.local/bin:$PATH"
+export PYTHONDONTWRITEBYTECODE=1
 export NOTION_ROOT_PAGE_ID="3589711f527180cdbe7fee7a34418b70"
 
 if [[ -z "${NOTION_API_KEY:-}" && -f "$HOME/.hermes/.env" ]]; then

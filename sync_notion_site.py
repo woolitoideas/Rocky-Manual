@@ -297,36 +297,47 @@ def render_block(block: dict, pages: dict[str, dict]) -> str:
 
 def build_sidebar(pages: dict[str, dict], current_id: str) -> str:
     current_id = normalize_id(current_id)
+    root_id = normalize_id(ROOT_PAGE_ID)
+
     parent: dict[str, str] = {}
     for pid, page in pages.items():
         for cid, _ in page.get('child_pages', []):
             parent[cid] = pid
 
-    current = pages[current_id]
-    children = [cid for cid, _ in current.get('child_pages', []) if cid in pages]
+    root_children = [cid for cid, _ in pages[root_id].get('child_pages', []) if cid in pages]
 
-    def node(pid: str) -> str:
+    path = {current_id}
+    cur = current_id
+    while cur in parent:
+        cur = parent[cur]
+        path.add(cur)
+
+    def node(pid: str, top_level: bool = False) -> str:
         page = pages[pid]
         title = html.escape(page['title'])
         href = html.escape(page['filename'])
         child_ids = [cid for cid, _ in page.get('child_pages', []) if cid in pages]
-        active = ' active' if pid == current_id else ''
+        active = ' active' if pid in path else ''
         if child_ids:
             inner = ''.join(node(cid) for cid in child_ids)
-            return f'<details class="nav-node"><summary><a class="nav-link{active}" href="{href}">{title}</a></summary><div class="nav-children">{inner}</div></details>'
-        return f'<a class="nav-link leaf{active}" href="{href}">{title}</a>'
+            open_attr = ' open' if pid in path else ''
+            summary_cls = 'section-summary' if top_level else 'nav-summary'
+            label_cls = 'section-label' if top_level else 'nav-label'
+            return (
+                f'<details class="nav-node{active}"{open_attr}>'
+                f'<summary class="{summary_cls}"><span class="{label_cls}">{title}</span></summary>'
+                f'<div class="nav-children">{inner}</div>'
+                f'</details>'
+            )
+        leaf_cls = 'nav-link leaf active' if pid == current_id else 'nav-link leaf'
+        return f'<a class="{leaf_cls}" href="{href}">{title}</a>'
 
-    if not children:
-        child_html = '<div class="empty-nav">這一頁沒有子頁</div>'
+    if not root_children:
+        child_html = '<div class="empty-nav">沒有可顯示的分區</div>'
     else:
-        child_html = ''.join(node(cid) for cid in children)
+        child_html = ''.join(node(cid, top_level=True) for cid in root_children)
 
-    parent_link = ''
-    if current_id in parent:
-        p = pages[parent[current_id]]
-        parent_link = f'<a class="parent-link" href="{html.escape(p["filename"])}">← 返回上層：{html.escape(p["title"])}</a>'
-
-    return f'''<div class="sidebar-page-title">{parent_link}<div class="sidebar-current">{html.escape(current['title'])}</div></div><nav class="nav-tree">{child_html}</nav>'''
+    return f'<nav class="nav-tree">{child_html}</nav>'
 
 
 def render_page(pages: dict[str, dict], page_id: str) -> str:
@@ -414,13 +425,16 @@ a:hover { text-decoration: underline; }
 .sidebar-current { font-size: 18px; font-weight: 700; line-height: 1.2; margin-top: 8px; }
 .parent-link { display: inline-block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
 .empty-nav { color: var(--muted); font-size: 13px; padding: 8px 2px; }
+.section-summary, .nav-summary { list-style: none; cursor: pointer; display: block; padding: 9px 12px; border-radius: 12px; color: var(--text); }
+.section-summary::-webkit-details-marker, .nav-summary::-webkit-details-marker { display: none; }
+.section-summary { font-weight: 700; font-size: 15px; }
+.section-summary:hover, .nav-summary:hover { background: rgba(125, 211, 252, 0.10); }
+.nav-label, .section-label { display: block; }
 .nav-tree { font-size: 14px; }
 .nav-node { margin: 4px 0; }
-.nav-node > summary { list-style: none; cursor: pointer; display: block; }
-.nav-node > summary::-webkit-details-marker { display: none; }
 .nav-link { display: block; padding: 9px 12px; border-radius: 12px; color: var(--text); background: transparent; }
 .nav-link:hover { background: rgba(125, 211, 252, 0.10); text-decoration: none; }
-.nav-link.active { background: linear-gradient(90deg, rgba(125,211,252,0.18), rgba(167,139,250,0.16)); border: 1px solid rgba(125,211,252,0.28); }
+.nav-link.active, .nav-node.active > .section-summary, .nav-node.active > .nav-summary { background: linear-gradient(90deg, rgba(125,211,252,0.18), rgba(167,139,250,0.16)); border: 1px solid rgba(125,211,252,0.28); }
 .nav-link.leaf { margin-left: 4px; }
 .nav-children { margin-left: 14px; padding-left: 10px; border-left: 1px dashed rgba(148,163,184,0.18); }
 .content { padding: 28px; overflow: auto; }
