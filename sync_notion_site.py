@@ -350,6 +350,8 @@ def render_page(pages: dict[str, dict], page_id: str) -> str:
     sidebar = build_sidebar(pages, page_id)
     title = html.escape(page['title'])
     body = render_children(page['blocks'], pages)
+    if normalize_id(page_id) == normalize_id(ROOT_PAGE_ID):
+        body = body.replace('Notion', '文件')
     parent: dict[str, str] = {}
     for pid, info in pages.items():
         for cid, _ in info.get('child_pages', []):
