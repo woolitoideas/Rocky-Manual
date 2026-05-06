@@ -7,6 +7,7 @@ import json
 import mimetypes
 import os
 import re
+import shutil
 import sys
 import unicodedata
 import urllib.error
@@ -19,6 +20,7 @@ ROOT_PAGE_ID = os.environ.get('NOTION_ROOT_PAGE_ID', '3589711f527180cdbe7fee7a34
 OUTPUT_DIR = Path(os.environ.get('OUTPUT_DIR', 'site'))
 ASSET_DIR = OUTPUT_DIR / 'assets'
 MEDIA_DIR = ASSET_DIR / 'media'
+BRAND_ICON_SOURCE = Path(os.environ.get('BRAND_ICON_SOURCE', 'rocky-home-icon.svg'))
 API_KEY = os.environ.get('NOTION_API_KEY')
 NOTION_VERSION = os.environ.get('NOTION_VERSION', '2025-09-03')
 BASE_URL = os.environ.get('NOTION_BASE_URL', 'https://api.notion.com/v1')
@@ -369,17 +371,18 @@ def render_page(pages: dict[str, dict], page_id: str) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{title} · Rocky Manual</title>
+  <title>{title}</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark">R</div>
+        <a class="brand-link" href="index.html" aria-label="回到首頁">
+          <img class="brand-icon" src="assets/media/rocky-home-icon.svg" alt="Rocky 使用指南" />
+        </a>
         <div>
-          <div class="brand-title">Rocky Manual</div>
-          <div class="brand-sub">Notion 靜態網站</div>
+          <div class="brand-title">Rocky 使用指南</div>
         </div>
       </div>
       <nav class="nav-tree">{sidebar}</nav>
@@ -404,6 +407,9 @@ def render_page(pages: dict[str, dict], page_id: str) -> str:
 
 def build_assets() -> None:
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    if BRAND_ICON_SOURCE.exists():
+        shutil.copyfile(BRAND_ICON_SOURCE, MEDIA_DIR / 'rocky-home-icon.jpeg')
     css = """
 :root {
   color-scheme: dark;
@@ -421,9 +427,9 @@ a:hover { text-decoration: underline; }
 .app-shell { display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; }
 .sidebar { position: sticky; top: 0; height: 100vh; overflow: auto; background: linear-gradient(180deg, rgba(8,12,24,.95), rgba(9,14,28,.88)); border-right: 1px solid var(--line); padding: 20px 16px; backdrop-filter: blur(16px); }
 .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.brand-mark { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; font-weight: 800; background: linear-gradient(135deg, #38bdf8, #8b5cf6); color: white; box-shadow: var(--shadow); }
+.brand-link { display: inline-flex; flex: 0 0 auto; border-radius: 16px; }
+.brand-icon { width: 48px; height: 48px; border-radius: 16px; display: block; object-fit: cover; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.10); }
 .brand-title { font-weight: 700; letter-spacing: .2px; }
-.brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
 .sidebar-page-title { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
 .sidebar-current { font-size: 18px; font-weight: 700; line-height: 1.2; margin-top: 8px; }
 .parent-link { display: inline-block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
