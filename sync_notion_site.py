@@ -274,39 +274,47 @@ def render_skill_tags(tags: list[str]) -> str:
 
 
 def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
+    page = pages[normalize_id(page_id)]
     skills = load_skill_catalog()
     tag_counts: dict[str, int] = {}
     tag_labels: dict[str, str] = {}
+    skill_map: dict[str, dict] = {}
     for skill in skills:
+        skill_map[skill['name'].lower()] = skill
         for tag in skill['tags']:
             key = tag.lower()
             tag_counts[key] = tag_counts.get(key, 0) + 1
             tag_labels.setdefault(key, tag)
     tag_options = sorted(tag_counts.items(), key=lambda item: (-item[1], tag_labels[item[0]].lower()))
-    skill_cards = []
-    for skill in skills:
-        tags = skill['tags']
-        skill_cards.append(
-            '<article class="skill-card" '
-            f'data-skill-card data-search="{html.escape(skill["search_blob"], quote=True)}" '
-            f'data-tags="{html.escape("|".join(tag.lower() for tag in tags), quote=True)}">'
-            '<div class="skill-card-head">'
-            f'<h3>{html.escape(skill["name"])}</h3>'
-            f'<span class="skill-category">{html.escape(skill["category"])}</span>'
-            '</div>'
-            f'<p class="skill-desc">{html.escape(skill["description"])}</p>'
-            f'<div class="skill-tags">{render_skill_tags(tags)}</div>'
-            '</article>'
-        )
-    tag_buttons = []
+    tag_buttons = [
+        '<button type="button" class="skill-tag-filter skill-tag-filter-active" data-tag="" aria-pressed="true">全部標籤</button>'
+    ]
     for key, count in tag_options:
         label = tag_labels[key]
         tag_buttons.append(
             f'<button type="button" class="skill-tag-filter" data-tag="{html.escape(key, quote=True)}">'
             f'{html.escape(label)} <span>({count})</span></button>'
         )
-    total = len(skills)
-    body_template = '''
+
+    body = render_children(page['blocks'], pages)
+
+    def inject_skill_attrs(html_body: str) -> str:
+        for skill in skill_map.values():
+            tags = '|'.join(tag.lower() for tag in skill['tags'])
+            search_blob = html.escape(skill['search_blob'], quote=True)
+            tag_blob = html.escape(tags, quote=True)
+            pattern = f'<li><strong>{html.escape(skill["name"])}</strong>'
+            replacement = (
+                f'<li class="skill-entry" data-search="{search_blob}" data-tags="{tag_blob}">'
+                f'<strong>{html.escape(skill["name"])}</strong>'
+            )
+            html_body = html_body.replace(pattern, replacement, 1)
+        return html_body
+
+    body = inject_skill_attrs(body)
+    body = body.replace('<ul class="notion-list">', '<ul class="notion-list skill-list">')
+
+    toolbar_template = r'''
       <section class="skill-browser">
         <p class="skill-intro">已整理成兩類：內建 skill、我們訓練的 skill。這頁現在可以直接搜尋 skill，也可以用多個標籤一起篩選。</p>
         <div class="skill-toolbar">
@@ -317,7 +325,6 @@ def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
           <div class="skill-filter">
             <span>標籤篩選（可多選）</span>
             <div class="skill-tag-filters" id="skill-tag-filters">
-              <button type="button" class="skill-tag-filter skill-tag-filter-active" data-tag="" aria-pressed="true">全部標籤</button>
               __TAG_BUTTONS__
             </div>
           </div>
@@ -329,27 +336,18 @@ def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
           <span class="skill-stats-sep">•</span>
           <span id="skill-selected-count">0 個標籤已選</span>
         </div>
-        <div class="skill-grid" id="skill-grid">
-          __SKILL_CARDS__
-        </div>
         <p class="skill-empty" id="skill-empty" hidden>沒有符合條件的 skill，試試清空搜尋或少選幾個標籤。</p>
       </section>
       <script>
       (() => {
         const search = document.getElementById('skill-search');
         const reset = document.getElementById('skill-reset');
-        const cards = Array.from(document.querySelectorAll('[data-skill-card]'));
-        const tagButtons = Array.from(document.querySelectorAll('[data-tag]'));
+        const entries = Array.from(document.querySelectorAll('.skill-entry'));
+        const tagButtons = Array.from(document.querySelectorAll('.skill-tag-filter'));
         const visibleCount = document.getElementById('skill-visible-count');
         const selectedCount = document.getElementById('skill-selected-count');
         const empty = document.getElementById('skill-empty');
         const selectedTags = new Set();
-
-        function updateSelectedLabel() {
-          selectedCount.textContent = selectedTags.size === 0
-            ? '0 個標籤已選'
-            : `${selectedTags.size} 個標籤已選`;
-        }
 
         function syncTagButtons() {
           tagButtons.forEach((button) => {
@@ -360,15 +358,21 @@ def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
           });
         }
 
+        function updateSelectedLabel() {
+          selectedCount.textContent = selectedTags.size === 0
+            ? '0 個標籤已選'
+            : `${selectedTags.size} 個標籤已選`;
+        }
+
         function applyFilters() {
           const q = search.value.trim().toLowerCase();
           let visible = 0;
-          cards.forEach((card) => {
-            const matchesSearch = !q || card.dataset.search.includes(q);
-            const tags = card.dataset.tags ? card.dataset.tags.split('|').filter(Boolean) : [];
+          entries.forEach((entry) => {
+            const matchesSearch = !q || entry.dataset.search.includes(q);
+            const tags = entry.dataset.tags ? entry.dataset.tags.split('|').filter(Boolean) : [];
             const matchesTag = selectedTags.size === 0 || tags.some((tag) => selectedTags.has(tag));
             const show = matchesSearch && matchesTag;
-            card.hidden = !show;
+            entry.hidden = !show;
             if (show) visible += 1;
           });
           visibleCount.textContent = visible;
@@ -377,9 +381,9 @@ def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
           updateSelectedLabel();
         }
 
-        tagButtons.forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const tag = btn.dataset.tag || '';
+        tagButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            const tag = button.dataset.tag || '';
             if (tag === '') {
               selectedTags.clear();
             } else if (selectedTags.has(tag)) {
@@ -402,10 +406,10 @@ def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
       })();
       </script>
     '''
-    body = body_template.replace('__TAG_BUTTONS__', ''.join(tag_buttons)).replace('__SKILL_CARDS__', ''.join(skill_cards)).replace('__TOTAL__', str(total))
+    toolbar = toolbar_template.replace('__TAG_BUTTONS__', ''.join(tag_buttons)).replace('__TOTAL__', str(len(skills)))
 
     sidebar = build_sidebar(pages, page_id)
-    title = html.escape('Skill 列表')
+    title = html.escape(page['title'])
     breadcrumb_html = f'<a href="index.html">{html.escape(pages[normalize_id(ROOT_PAGE_ID)]["title"])}</a><span class="sep">/</span><a href="skill-f71918c38ec9.html">Skill 列表</a>'
     return f"""<!doctype html>
 <html lang="zh-Hant">
@@ -437,7 +441,7 @@ def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
         <header class="page-header">
           <h1>{title}</h1>
         </header>
-        <section class="page-body">{body}</section>
+        <section class="page-body">{toolbar}{body}</section>
       </article>
     </main>
   </div>
