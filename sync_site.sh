@@ -15,7 +15,7 @@ fi
 printf '[sync] regenerating static site...\n'
 python sync_notion_site.py
 
-if git diff --quiet -- site README.md sync_notion_site.py .gitignore sync_site.sh; then
+if git diff --quiet -- site README.md sync_notion_site.py .gitignore sync_site.sh rocky-home-icon.jpeg; then
   printf '[sync] no changes detected; nothing to commit.\n'
   exit 0
 fi
@@ -24,7 +24,7 @@ STAMP="$(date '+%Y-%m-%d %H:%M:%S')"
 MSG="sync: update static site from Notion ($STAMP)"
 
 printf '[sync] committing changes...\n'
-git add site README.md sync_notion_site.py .gitignore sync_site.sh
+git add site README.md sync_notion_site.py .gitignore sync_site.sh rocky-home-icon.jpeg
 git commit -m "$MSG"
 
 printf '[sync] pushing to origin/main...\n'
