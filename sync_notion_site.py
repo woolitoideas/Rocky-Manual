@@ -295,37 +295,43 @@ def render_block(block: dict, pages: dict[str, dict]) -> str:
     return f'<div class="unsupported">[{html.escape(t)}]</div>'
 
 
-def build_sidebar(pages: dict[str, dict], root_id: str, current_id: str) -> str:
-    root_id = normalize_id(root_id)
+def build_sidebar(pages: dict[str, dict], current_id: str) -> str:
     current_id = normalize_id(current_id)
     parent: dict[str, str] = {}
     for pid, page in pages.items():
         for cid, _ in page.get('child_pages', []):
             parent[cid] = pid
-    path = {current_id}
-    cur = current_id
-    while cur in parent:
-        cur = parent[cur]
-        path.add(cur)
+
+    current = pages[current_id]
+    children = [cid for cid, _ in current.get('child_pages', []) if cid in pages]
 
     def node(pid: str) -> str:
         page = pages[pid]
         title = html.escape(page['title'])
         href = html.escape(page['filename'])
-        children = [cid for cid, _ in page.get('child_pages', []) if cid in pages]
+        child_ids = [cid for cid, _ in page.get('child_pages', []) if cid in pages]
         active = ' active' if pid == current_id else ''
-        if children:
-            inner = ''.join(node(cid) for cid in children)
-            open_attr = ' open' if pid in path else ''
-            return f'<details class="nav-node"{open_attr}><summary><a class="nav-link{active}" href="{href}">{title}</a></summary><div class="nav-children">{inner}</div></details>'
+        if child_ids:
+            inner = ''.join(node(cid) for cid in child_ids)
+            return f'<details class="nav-node"><summary><a class="nav-link{active}" href="{href}">{title}</a></summary><div class="nav-children">{inner}</div></details>'
         return f'<a class="nav-link leaf{active}" href="{href}">{title}</a>'
 
-    return node(root_id)
+    if not children:
+        child_html = '<div class="empty-nav">這一頁沒有子頁</div>'
+    else:
+        child_html = ''.join(node(cid) for cid in children)
+
+    parent_link = ''
+    if current_id in parent:
+        p = pages[parent[current_id]]
+        parent_link = f'<a class="parent-link" href="{html.escape(p["filename"])}">← 返回上層：{html.escape(p["title"])}</a>'
+
+    return f'''<div class="sidebar-page-title">{parent_link}<div class="sidebar-current">{html.escape(current['title'])}</div></div><nav class="nav-tree">{child_html}</nav>'''
 
 
 def render_page(pages: dict[str, dict], page_id: str) -> str:
     page = pages[normalize_id(page_id)]
-    sidebar = build_sidebar(pages, ROOT_PAGE_ID, page_id)
+    sidebar = build_sidebar(pages, page_id)
     title = html.escape(page['title'])
     body = render_children(page['blocks'], pages)
     parent: dict[str, str] = {}
@@ -404,6 +410,10 @@ a:hover { text-decoration: underline; }
 .brand-mark { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; font-weight: 800; background: linear-gradient(135deg, #38bdf8, #8b5cf6); color: white; box-shadow: var(--shadow); }
 .brand-title { font-weight: 700; letter-spacing: .2px; }
 .brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.sidebar-page-title { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.sidebar-current { font-size: 18px; font-weight: 700; line-height: 1.2; margin-top: 8px; }
+.parent-link { display: inline-block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+.empty-nav { color: var(--muted); font-size: 13px; padding: 8px 2px; }
 .nav-tree { font-size: 14px; }
 .nav-node { margin: 4px 0; }
 .nav-node > summary { list-style: none; cursor: pointer; display: block; }

@@ -18,6 +18,10 @@ a:hover { text-decoration: underline; }
 .brand-mark { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; font-weight: 800; background: linear-gradient(135deg, #38bdf8, #8b5cf6); color: white; box-shadow: var(--shadow); }
 .brand-title { font-weight: 700; letter-spacing: .2px; }
 .brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.sidebar-page-title { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.sidebar-current { font-size: 18px; font-weight: 700; line-height: 1.2; margin-top: 8px; }
+.parent-link { display: inline-block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+.empty-nav { color: var(--muted); font-size: 13px; padding: 8px 2px; }
 .nav-tree { font-size: 14px; }
 .nav-node { margin: 4px 0; }
 .nav-node > summary { list-style: none; cursor: pointer; display: block; }
