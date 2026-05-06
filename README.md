@@ -7,6 +7,7 @@
 - 可展開 / 收合多層子頁
 - 每個 Notion page 都會輸出成靜態 HTML
 - 圖片會下載到 `site/assets/media/`
+- Skill 列表頁支援搜尋與標籤篩選
 
 ## 本機路徑
 `D:\Woolito Animation Dropbox\0_Woolito Animation Team Folder\Rocky\Manual`

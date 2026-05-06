@@ -16,11 +16,16 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
+import yaml
+
 ROOT_PAGE_ID = os.environ.get('NOTION_ROOT_PAGE_ID', '3589711f527180cdbe7fee7a34418b70')
 OUTPUT_DIR = Path(os.environ.get('OUTPUT_DIR', 'site'))
 ASSET_DIR = OUTPUT_DIR / 'assets'
 MEDIA_DIR = ASSET_DIR / 'media'
 BRAND_ICON_SOURCE = Path(os.environ.get('BRAND_ICON_SOURCE', 'rocky-home-icon.jpeg'))
+SKILLS_ROOT = Path(os.environ.get('HERMES_SKILLS_ROOT', '/home/user/.hermes/skills'))
+SKILL_LIST_PAGE_ID = '3589711f527180c58d18f71918c38ec9'
+skill_catalog_cache: list[dict] | None = None
 API_KEY = os.environ.get('NOTION_API_KEY')
 NOTION_VERSION = os.environ.get('NOTION_VERSION', '2025-09-03')
 BASE_URL = os.environ.get('NOTION_BASE_URL', 'https://api.notion.com/v1')
@@ -195,6 +200,251 @@ def download_asset(url: str) -> Path:
     return out.relative_to(OUTPUT_DIR)
 
 
+def parse_skill_frontmatter(path: Path) -> dict:
+    text = path.read_text(encoding='utf-8')
+    if not text.startswith('---'):
+        return {}
+    parts = text.split('---', 2)
+    if len(parts) < 3:
+        return {}
+    try:
+        data = yaml.safe_load(parts[1])
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def skill_tags_from_frontmatter(data: dict) -> list[str]:
+    tags = []
+    metadata = data.get('metadata')
+    if isinstance(metadata, dict):
+        hermes = metadata.get('hermes')
+        if isinstance(hermes, dict):
+            tags = hermes.get('tags') or []
+    if not tags:
+        tags = data.get('tags') or []
+    if isinstance(tags, str):
+        tags = [tags]
+    cleaned: list[str] = []
+    seen: set[str] = set()
+    for tag in tags:
+        tag = str(tag).strip()
+        if not tag:
+            continue
+        key = tag.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        cleaned.append(tag)
+    return cleaned
+
+
+def load_skill_catalog() -> list[dict]:
+    global skill_catalog_cache
+    if skill_catalog_cache is not None:
+        return skill_catalog_cache
+    skills: list[dict] = []
+    if SKILLS_ROOT.exists():
+        for path in sorted(SKILLS_ROOT.rglob('SKILL.md')):
+            data = parse_skill_frontmatter(path)
+            name = str(data.get('name') or path.parent.name).strip() or path.parent.name
+            description = str(data.get('description') or '').strip()
+            tags = skill_tags_from_frontmatter(data)
+            rel = path.relative_to(SKILLS_ROOT)
+            category = rel.parts[0] if len(rel.parts) > 1 else path.parent.name
+            skill_dir = '/'.join(rel.parts[:-1])
+            search_blob = ' '.join([name, description, category, skill_dir, *tags]).lower()
+            skills.append({
+                'name': name,
+                'description': description,
+                'tags': tags,
+                'category': category,
+                'skill_dir': skill_dir,
+                'search_blob': search_blob,
+            })
+    skills.sort(key=lambda item: (item['category'].lower(), item['name'].lower()))
+    skill_catalog_cache = skills
+    return skills
+
+
+def render_skill_tags(tags: list[str]) -> str:
+    if not tags:
+        return '<span class="skill-tag-empty">無標籤</span>'
+    return ''.join(f'<span class="skill-tag">{html.escape(tag)}</span>' for tag in tags)
+
+
+def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
+    skills = load_skill_catalog()
+    tag_counts: dict[str, int] = {}
+    tag_labels: dict[str, str] = {}
+    for skill in skills:
+        for tag in skill['tags']:
+            key = tag.lower()
+            tag_counts[key] = tag_counts.get(key, 0) + 1
+            tag_labels.setdefault(key, tag)
+    tag_options = sorted(tag_counts.items(), key=lambda item: (-item[1], tag_labels[item[0]].lower()))
+    skill_cards = []
+    for skill in skills:
+        tags = skill['tags']
+        skill_cards.append(
+            '<article class="skill-card" '
+            f'data-skill-card data-search="{html.escape(skill["search_blob"], quote=True)}" '
+            f'data-tags="{html.escape("|".join(tag.lower() for tag in tags), quote=True)}">'
+            '<div class="skill-card-head">'
+            f'<h3>{html.escape(skill["name"])}</h3>'
+            f'<span class="skill-category">{html.escape(skill["category"])}</span>'
+            '</div>'
+            f'<p class="skill-desc">{html.escape(skill["description"])}</p>'
+            f'<div class="skill-tags">{render_skill_tags(tags)}</div>'
+            '</article>'
+        )
+    tag_buttons = []
+    for key, count in tag_options:
+        label = tag_labels[key]
+        tag_buttons.append(
+            f'<button type="button" class="skill-tag-filter" data-tag="{html.escape(key, quote=True)}">'
+            f'{html.escape(label)} <span>({count})</span></button>'
+        )
+    total = len(skills)
+    body_template = '''
+      <section class="skill-browser">
+        <p class="skill-intro">已整理成兩類：內建 skill、我們訓練的 skill。這頁現在可以直接搜尋 skill，也可以用多個標籤一起篩選。</p>
+        <div class="skill-toolbar">
+          <label class="skill-search">
+            <span>搜尋 skill</span>
+            <input id="skill-search" type="search" placeholder="搜尋名稱、描述、分類或標籤">
+          </label>
+          <div class="skill-filter">
+            <span>標籤篩選（可多選）</span>
+            <div class="skill-tag-filters" id="skill-tag-filters">
+              <button type="button" class="skill-tag-filter skill-tag-filter-active" data-tag="" aria-pressed="true">全部標籤</button>
+              __TAG_BUTTONS__
+            </div>
+          </div>
+          <button class="skill-reset" type="button" id="skill-reset">清除篩選</button>
+        </div>
+        <div class="skill-stats">
+          <span id="skill-visible-count">__TOTAL__</span>
+          <span>/ __TOTAL__ 個 skill</span>
+          <span class="skill-stats-sep">•</span>
+          <span id="skill-selected-count">0 個標籤已選</span>
+        </div>
+        <div class="skill-grid" id="skill-grid">
+          __SKILL_CARDS__
+        </div>
+        <p class="skill-empty" id="skill-empty" hidden>沒有符合條件的 skill，試試清空搜尋或少選幾個標籤。</p>
+      </section>
+      <script>
+      (() => {
+        const search = document.getElementById('skill-search');
+        const reset = document.getElementById('skill-reset');
+        const cards = Array.from(document.querySelectorAll('[data-skill-card]'));
+        const tagButtons = Array.from(document.querySelectorAll('[data-tag]'));
+        const visibleCount = document.getElementById('skill-visible-count');
+        const selectedCount = document.getElementById('skill-selected-count');
+        const empty = document.getElementById('skill-empty');
+        const selectedTags = new Set();
+
+        function updateSelectedLabel() {
+          selectedCount.textContent = selectedTags.size === 0
+            ? '0 個標籤已選'
+            : `${selectedTags.size} 個標籤已選`;
+        }
+
+        function syncTagButtons() {
+          tagButtons.forEach((button) => {
+            const tag = button.dataset.tag || '';
+            const pressed = tag === '' ? selectedTags.size === 0 : selectedTags.has(tag);
+            button.classList.toggle('skill-tag-filter-active', pressed);
+            button.setAttribute('aria-pressed', String(pressed));
+          });
+        }
+
+        function applyFilters() {
+          const q = search.value.trim().toLowerCase();
+          let visible = 0;
+          cards.forEach((card) => {
+            const matchesSearch = !q || card.dataset.search.includes(q);
+            const tags = card.dataset.tags ? card.dataset.tags.split('|').filter(Boolean) : [];
+            const matchesTag = selectedTags.size === 0 || tags.some((tag) => selectedTags.has(tag));
+            const show = matchesSearch && matchesTag;
+            card.hidden = !show;
+            if (show) visible += 1;
+          });
+          visibleCount.textContent = visible;
+          empty.hidden = visible !== 0;
+          syncTagButtons();
+          updateSelectedLabel();
+        }
+
+        tagButtons.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const tag = btn.dataset.tag || '';
+            if (tag === '') {
+              selectedTags.clear();
+            } else if (selectedTags.has(tag)) {
+              selectedTags.delete(tag);
+            } else {
+              selectedTags.add(tag);
+            }
+            applyFilters();
+          });
+        });
+
+        search.addEventListener('input', applyFilters);
+        reset.addEventListener('click', () => {
+          search.value = '';
+          selectedTags.clear();
+          applyFilters();
+          search.focus();
+        });
+        applyFilters();
+      })();
+      </script>
+    '''
+    body = body_template.replace('__TAG_BUTTONS__', ''.join(tag_buttons)).replace('__SKILL_CARDS__', ''.join(skill_cards)).replace('__TOTAL__', str(total))
+
+    sidebar = build_sidebar(pages, page_id)
+    title = html.escape('Skill 列表')
+    breadcrumb_html = f'<a href="index.html">{html.escape(pages[normalize_id(ROOT_PAGE_ID)]["title"])}</a><span class="sep">/</span><a href="skill-f71918c38ec9.html">Skill 列表</a>'
+    return f"""<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{title}</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <a class="brand-link" href="index.html" aria-label="回到首頁">
+          <img class="brand-icon" src="assets/media/rocky-home-icon.jpeg" alt="Rocky 使用指南" />
+        </a>
+        <div>
+          <div class="brand-title">Rocky 使用指南</div>
+        </div>
+      </div>
+      <nav class="nav-tree">{sidebar}</nav>
+    </aside>
+    <main class="content">
+      <div class="topbar">
+        <div class="breadcrumbs">{breadcrumb_html}</div>
+        <div class="page-id">{short_id(page_id)}</div>
+      </div>
+      <article class="page-card">
+        <header class="page-header">
+          <h1>{title}</h1>
+        </header>
+        <section class="page-body">{body}</section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>"""
+
+
 def render_children(blocks: list[dict], pages: dict[str, dict]) -> str:
     pieces: list[str] = []
     i = 0
@@ -347,6 +597,8 @@ def build_sidebar(pages: dict[str, dict], current_id: str) -> str:
 
 def render_page(pages: dict[str, dict], page_id: str) -> str:
     page = pages[normalize_id(page_id)]
+    if normalize_id(page_id) == normalize_id(SKILL_LIST_PAGE_ID):
+        return render_skill_catalog_page(page_id, pages)
     sidebar = build_sidebar(pages, page_id)
     title = html.escape(page['title'])
     body = render_children(page['blocks'], pages)
@@ -404,6 +656,7 @@ def render_page(pages: dict[str, dict], page_id: str) -> str:
   </div>
 </body>
 </html>"""
+
 
 
 def build_assets() -> None:
@@ -482,7 +735,34 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monos
 .child-page-card span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
 .child-page-card strong { color: var(--text); font-size: 16px; }
 .toggle { margin: 14px 0; }
-.unsupported { color: #fca5a5; }
+.skill-browser { display: grid; gap: 18px; }
+.skill-intro { margin: 0; color: var(--muted); font-size: 15px; }
+.skill-toolbar { display: grid; grid-template-columns: 1.6fr 0.9fr auto; gap: 14px; align-items: end; padding: 18px; border: 1px solid var(--line); border-radius: 20px; background: rgba(15, 23, 42, 0.62); box-shadow: inset 0 1px 0 rgba(255,255,255,0.03); }
+.skill-search, .skill-filter { display: grid; gap: 8px; }
+.skill-search span, .skill-filter span { font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.skill-tag-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.skill-tag-filter { border: 1px solid rgba(148,163,184,.22); background: rgba(5, 8, 22, 0.82); color: var(--text); border-radius: 999px; padding: 8px 12px; font: inherit; font-size: 13px; cursor: pointer; transition: all .15s ease; }
+.skill-tag-filter span { color: inherit; font-size: inherit; text-transform: none; letter-spacing: 0; }
+.skill-tag-filter:hover { border-color: rgba(125,211,252,.42); transform: translateY(-1px); }
+.skill-tag-filter-active { background: linear-gradient(180deg, rgba(125,211,252,.22), rgba(167,139,250,.18)); border-color: rgba(125,211,252,.48); box-shadow: 0 0 0 2px rgba(125,211,252,.08) inset; }
+.skill-search input { width: 100%; border: 1px solid rgba(148,163,184,.24); background: rgba(5, 8, 22, 0.92); color: var(--text); border-radius: 14px; padding: 13px 14px; outline: none; font: inherit; }
+.skill-search input:focus { border-color: rgba(125,211,252,.65); box-shadow: 0 0 0 3px rgba(125,211,252,.12); }
+.skill-reset { align-self: end; border: 1px solid rgba(125,211,252,.22); background: linear-gradient(180deg, rgba(125,211,252,.18), rgba(125,211,252,.08)); color: var(--text); border-radius: 14px; padding: 12px 16px; font: inherit; cursor: pointer; transition: transform .15s ease, border-color .15s ease; }
+.skill-reset:hover { transform: translateY(-1px); border-color: rgba(125,211,252,.42); }
+.skill-stats { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+.skill-stats strong, .skill-stats #skill-visible-count { color: var(--text); font-weight: 700; }
+.skill-stats-sep { color: rgba(148,163,184,.55); }
+.skill-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.skill-card { border: 1px solid rgba(148,163,184,.16); border-radius: 20px; padding: 18px; background: linear-gradient(180deg, rgba(10, 16, 32, 0.96), rgba(10, 16, 32, 0.72)); box-shadow: var(--shadow); display: grid; gap: 12px; }
+.skill-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.skill-card h3 { margin: 0; font-size: 18px; line-height: 1.2; }
+.skill-category { flex: 0 0 auto; padding: 5px 10px; border-radius: 999px; background: rgba(125,211,252,.12); border: 1px solid rgba(125,211,252,.18); color: #dff5ff; font-size: 12px; }
+.skill-desc { margin: 0; color: #d8e3f4; line-height: 1.7; }
+.skill-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.skill-tag, .skill-tag-empty { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; font-size: 12px; line-height: 1; }
+.skill-tag { background: rgba(167,139,250,.14); color: #efe7ff; border: 1px solid rgba(167,139,250,.22); }
+.skill-tag-empty { background: rgba(148,163,184,.10); color: var(--muted); border: 1px dashed rgba(148,163,184,.18); }
+.skill-empty { margin: 0; padding: 18px; border: 1px dashed rgba(125,211,252,.22); border-radius: 18px; color: var(--muted); background: rgba(125,211,252,.05); }
 @media (max-width: 980px) {
   .app-shell { grid-template-columns: 1fr; }
   .sidebar { position: relative; height: auto; }
