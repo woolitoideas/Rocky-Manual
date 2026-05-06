@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>錯誤排除（啟動 Rocky） · Rocky Manual</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">R</div>
+        <div>
+          <div class="brand-title">Rocky Manual</div>
+          <div class="brand-sub">Notion 靜態網站</div>
+        </div>
+      </div>
+      <nav class="nav-tree"><details class="nav-node" open><summary><a class="nav-link" href="index.html">Rocky 使用指南</a></summary><div class="nav-children"><details class="nav-node" open><summary><a class="nav-link" href="page-cd1461da4bae.html">基本操作</a></summary><div class="nav-children"><a class="nav-link leaf" href="rocky-f0fa33fa5539.html">Rocky 的工具</a><a class="nav-link leaf" href="rocky-c0bc221aecd9.html">將 Rocky 新增到頻道</a><a class="nav-link leaf active" href="rocky-e38d48af66f0.html">錯誤排除（啟動 Rocky）</a><a class="nav-link leaf" href="rocky-e1498168e900.html">遠端連線到 Rocky 本體</a></div></details><a class="nav-link leaf" href="rocky-f0fa33fa5539.html">Rocky 的工具</a><a class="nav-link leaf" href="rocky-c0bc221aecd9.html">將 Rocky 新增到頻道</a><a class="nav-link leaf active" href="rocky-e38d48af66f0.html">錯誤排除（啟動 Rocky）</a><a class="nav-link leaf" href="rocky-e1498168e900.html">遠端連線到 Rocky 本體</a><details class="nav-node"><summary><a class="nav-link" href="rocky-skill-feb8bf189510.html">Rocky 的 Skill </a></summary><div class="nav-children"><a class="nav-link leaf" href="skill-f71918c38ec9.html">Skill 列表</a></div></details><a class="nav-link leaf" href="skill-f71918c38ec9.html">Skill 列表</a><a class="nav-link leaf" href="page-d8ca496b692d.html">中基會專區</a></div></details></nav>
+    </aside>
+    <main class="content">
+      <div class="topbar">
+        <div class="breadcrumbs"><a href="index.html">Rocky 使用指南</a><span class="sep">/</span><a href="page-cd1461da4bae.html">基本操作</a><span class="sep">/</span><a href="rocky-e38d48af66f0.html">錯誤排除（啟動 Rocky）</a></div>
+        <div class="page-id">e38d48af66f0</div>
+      </div>
+      <article class="page-card">
+        <header class="page-header">
+          <h1>錯誤排除（啟動 Rocky）</h1>
+          <div class="page-meta">Source: Notion · Auto-generated static snapshot</div>
+        </header>
+        <section class="page-body"><p>理論上 Rocky 在電腦重開機後會自動啟動即可正常使用，若遇到什麼錯誤可以直接叫他自己修好自己</p><h4>啟動 Rocky 的方式：</h4><div class="columns"><div class="column"><ol class="notion-list"><li>在 Rocky 主機點「開始」選擇「Windows PowerShell」</li></ol><p></p></div><div class="column"><figure class="image-block"><img src="assets/media/e6-88-aa-e5-9c-96-2026-05-06-17-25-01-aHR0cHM6Ly9w.png" alt="image"></figure></div></div><div class="columns"><div class="column"><ol class="notion-list"><li>輸入 <code>wsl</code> 後按 Enter，會看到這個畫面，一定要出現下面這行
+<code>user@DESKTOP-GBLH4JG:/mnt/c/Windows/system32$</code></li></ol></div><div class="column"><figure class="image-block"><img src="assets/media/e6-88-aa-e5-9c-96-2026-05-06-17-26-27-aHR0cHM6Ly9w.png" alt="image"></figure></div></div><div class="columns"><div class="column"><ol class="notion-list"><li>輸入 <code>hermes gateway run</code> 等他跑出這個畫面即可</li></ol><p></p></div><div class="column"><figure class="image-block"><img src="assets/media/e6-88-aa-e5-9c-96-2026-05-06-17-57-11-aHR0cHM6Ly9w.png" alt="image"></figure></div></div><h4>在本機使用 Rocky：</h4><p>有時候 Rocky 無法在 Slack 上連接上，可以直接在 Rocky 本體上使用它並叫他修復</p><div class="columns"><div class="column"><ol class="notion-list"><li>在 Rocky 主機點「開始」選擇「Windows PowerShell」</li></ol><p></p></div><div class="column"><figure class="image-block"><img src="assets/media/e6-88-aa-e5-9c-96-2026-05-06-17-25-01-aHR0cHM6Ly9w.png" alt="image"></figure></div></div><div class="columns"><div class="column"><ol class="notion-list"><li>輸入 <code>wsl</code> 後按 Enter，會看到這個畫面，一定要出現下面這行
+<code>user@DESKTOP-GBLH4JG:/mnt/c/Windows/system32$</code></li></ol><p></p></div><div class="column"><figure class="image-block"><img src="assets/media/e6-88-aa-e5-9c-96-2026-05-06-18-08-19-aHR0cHM6Ly9w.png" alt="image"></figure></div></div><p></p><div class="columns"><div class="column"><ol class="notion-list"><li>輸入 <code>hermes</code></li></ol><p></p></div><div class="column"><figure class="image-block"><img src="assets/media/e6-88-aa-e5-9c-96-2026-05-06-18-05-53-aHR0cHM6Ly9w.png" alt="image"></figure></div></div><div class="columns"><div class="column"><ol class="notion-list"><li>出現這個畫面時即可直接跟他對話請他修復 slack 通道</li></ol></div><div class="column"><figure class="image-block"><img src="assets/media/e6-88-aa-e5-9c-96-2026-05-06-18-06-20-aHR0cHM6Ly9w.png" alt="image"></figure></div></div><h4>強制關閉並重啟 Rocky：</h4><p>非必要不要強制關閉他，需要的話可以先重開機就好</p><p>但有時候因為某些原因（例如通道被塞住）必須強制關閉，請依照以下方法</p><div class="columns"><div class="column"><ol class="notion-list"><li>在 Rocky 主機點「開始」選擇「Windows PowerShell」</li></ol></div><div class="column"><figure class="image-block"><img src="assets/media/e6-88-aa-e5-9c-96-2026-05-06-17-25-01-aHR0cHM6Ly9w.png" alt="image"></figure></div></div><div class="columns"><div class="column"><ol class="notion-list"><li>輸入 <code>wsl</code> 後按 Enter，會看到這個畫面，一定要出現下面這行
+<code>user@DESKTOP-GBLH4JG:/mnt/c/Windows/system32$</code></li></ol><p></p></div><div class="column"><figure class="image-block"><img src="assets/media/e6-88-aa-e5-9c-96-2026-05-06-18-08-19-aHR0cHM6Ly9w.png" alt="image"></figure></div></div><div class="columns"><div class="column"><ol class="notion-list"><li>輸入 <code>hermes gateway stop</code></li></ol></div><div class="column"><figure class="image-block"><img src="assets/media/e6-88-aa-e5-9c-96-2026-05-06-18-10-37-aHR0cHM6Ly9w.png" alt="image"></figure></div></div><div class="columns"><div class="column"><ol class="notion-list"><li>再輸入 <code>hermes gateway restart</code> 即可 </li></ol><p></p></div><div class="column"><figure class="image-block"><img src="assets/media/e6-88-aa-e5-9c-96-2026-05-06-18-11-49-aHR0cHM6Ly9w.png" alt="image"></figure></div></div><p></p></section>
+      </article>
+    </main>
+  </div>
+</body>
+</html>
