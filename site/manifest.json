@@ -1,6 +1,6 @@
 {
   "root_page_id": "3589711f527180cdbe7fee7a34418b70",
-  "generated_at": "2026-05-06T14:44:54.053559Z",
+  "generated_at": "2026-05-06T14:54:38.807031Z",
   "pages": [
     {
       "id": "3589711f527180cdbe7fee7a34418b70",
@@ -74,10 +74,20 @@
       "filename": "rocky-skill-feb8bf189510.html",
       "child_pages": [
         {
+          "id": "3589711f527180399906d4b68fa699dc",
+          "title": "Skill 說明"
+        },
+        {
           "id": "3589711f527180c58d18f71918c38ec9",
           "title": "Skill 列表"
         }
       ]
+    },
+    {
+      "id": "3589711f527180399906d4b68fa699dc",
+      "title": "Skill 說明",
+      "filename": "skill-d4b68fa699dc.html",
+      "child_pages": []
     },
     {
       "id": "3589711f527180c58d18f71918c38ec9",
