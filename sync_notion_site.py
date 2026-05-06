@@ -20,7 +20,7 @@ ROOT_PAGE_ID = os.environ.get('NOTION_ROOT_PAGE_ID', '3589711f527180cdbe7fee7a34
 OUTPUT_DIR = Path(os.environ.get('OUTPUT_DIR', 'site'))
 ASSET_DIR = OUTPUT_DIR / 'assets'
 MEDIA_DIR = ASSET_DIR / 'media'
-BRAND_ICON_SOURCE = Path(os.environ.get('BRAND_ICON_SOURCE', 'rocky-home-icon.svg'))
+BRAND_ICON_SOURCE = Path(os.environ.get('BRAND_ICON_SOURCE', 'rocky-home-icon.jpeg'))
 API_KEY = os.environ.get('NOTION_API_KEY')
 NOTION_VERSION = os.environ.get('NOTION_VERSION', '2025-09-03')
 BASE_URL = os.environ.get('NOTION_BASE_URL', 'https://api.notion.com/v1')
@@ -379,7 +379,7 @@ def render_page(pages: dict[str, dict], page_id: str) -> str:
     <aside class="sidebar">
       <div class="brand">
         <a class="brand-link" href="index.html" aria-label="回到首頁">
-          <img class="brand-icon" src="assets/media/rocky-home-icon.svg" alt="Rocky 使用指南" />
+          <img class="brand-icon" src="assets/media/rocky-home-icon.jpeg" alt="Rocky 使用指南" />
         </a>
         <div>
           <div class="brand-title">Rocky 使用指南</div>
@@ -395,7 +395,6 @@ def render_page(pages: dict[str, dict], page_id: str) -> str:
       <article class="page-card">
         <header class="page-header">
           <h1>{title}</h1>
-          <div class="page-meta">Source: Notion · Auto-generated static snapshot</div>
         </header>
         <section class="page-body">{body}</section>
       </article>
@@ -409,8 +408,7 @@ def build_assets() -> None:
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     if BRAND_ICON_SOURCE.exists():
-        shutil.copyfile(BRAND_ICON_SOURCE, MEDIA_DIR / 'rocky-home-icon.svg')
-        shutil.copyfile(BRAND_ICON_SOURCE, MEDIA_DIR / 'rocky-home-icon.jpeg')
+        shutil.copyfile(BRAND_ICON_SOURCE, MEDIA_DIR / BRAND_ICON_SOURCE.name)
     css = """
 :root {
   color-scheme: dark;
