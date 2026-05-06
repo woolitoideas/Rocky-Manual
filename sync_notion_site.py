@@ -277,10 +277,9 @@ def render_block(block: dict, pages: dict[str, dict]) -> str:
         emoji = block.get('callout', {}).get('icon', {}).get('emoji', '💡')
         return f'<div class="callout"><span class="emoji">{html.escape(emoji)}</span><div>{render_inline_block(block)}</div></div>'
     if t == 'child_page':
-        cid = normalize_id(block['id'])
-        title = block.get('child_page', {}).get('title', 'Untitled page')
-        href = pages[cid]['filename'] if cid in pages else '#'
-        return f'<a class="child-page-card" href="{html.escape(href)}"><span>子頁面</span><strong>{html.escape(title)}</strong></a>'
+        # Child pages are already represented in the sidebar tree.
+        # Skip rendering them again in the body to avoid duplicate navigation items.
+        return ''
     if t == 'image':
         return f'<figure class="image-block">{render_image(block)}</figure>'
     if t == 'divider':
