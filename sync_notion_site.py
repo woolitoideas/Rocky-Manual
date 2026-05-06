@@ -111,7 +111,10 @@ def build_block_tree(block_id: str) -> list[dict]:
     tree = []
     for block in get_children(block_id):
         node = dict(block)
-        node['_children'] = build_block_tree(block['id']) if block.get('has_children') else []
+        if block.get('type') == 'child_page':
+            node['_children'] = []
+        else:
+            node['_children'] = build_block_tree(block['id']) if block.get('has_children') else []
         tree.append(node)
     return tree
 
