@@ -445,6 +445,7 @@ def render_router_script() -> str:
   const NAV_SELECTOR = '.sidebar .nav-tree';
   const CONTENT_SELECTOR = '.content';
   const INTERNAL_EXTENSIONS = ['.html'];
+  const STORAGE_KEY = 'rocky-manual-sidebar-open-paths';
   const PAGE_DATA = window.ROCKY_MANUAL_PAGES || {};
 
   function isModifiedClick(event) {
@@ -461,6 +462,91 @@ def render_router_script() -> str:
       return false;
     }
     return INTERNAL_EXTENSIONS.some((ext) => url.pathname.toLowerCase().endsWith(ext));
+  }
+
+  function getDetailsSummaryText(details) {
+    const summary = Array.from(details.children).find((el) => el.tagName === 'SUMMARY');
+    return summary ? summary.textContent.trim().replace(/\s+/g, ' ') : '';
+  }
+
+  function getDetailsPath(details) {
+    const parts = [];
+    let node = details;
+    while (node && node.tagName === 'DETAILS') {
+      parts.push(getDetailsSummaryText(node));
+      node = node.parentElement ? node.parentElement.closest('details') : null;
+    }
+    return parts.reverse().join(' > ');
+  }
+
+  function readStoredOpenPaths() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return new Set();
+      const data = JSON.parse(raw);
+      return new Set(Array.isArray(data) ? data : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  function writeStoredOpenPaths(sidebar) {
+    if (!sidebar) return;
+    try {
+      const openPaths = Array.from(sidebar.querySelectorAll('details[open]')).map(getDetailsPath);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(openPaths));
+    } catch {
+      /* ignore storage errors */
+    }
+  }
+
+  function restoreStoredOpenPaths(sidebar) {
+    if (!sidebar) return;
+    const openPaths = readStoredOpenPaths();
+    if (openPaths.size === 0) return;
+    sidebar.querySelectorAll('details.nav-node').forEach((details) => {
+      details.open = openPaths.has(getDetailsPath(details));
+    });
+  }
+
+  function bindSidebarPersistence(sidebar) {
+    if (!sidebar || sidebar.dataset.sidebarPersistenceBound === '1') return;
+    sidebar.dataset.sidebarPersistenceBound = '1';
+    sidebar.querySelectorAll('details.nav-node').forEach((details) => {
+      details.addEventListener('toggle', () => writeStoredOpenPaths(sidebar));
+    });
+    restoreStoredOpenPaths(sidebar);
+    writeStoredOpenPaths(sidebar);
+  }
+
+  function syncSidebarState(sidebar, sidebarHtml) {
+    if (!sidebar) return;
+    const template = document.createElement('div');
+    template.innerHTML = sidebarHtml;
+
+    sidebar.querySelectorAll('.active').forEach((el) => el.classList.remove('active'));
+
+    template.querySelectorAll('.active').forEach((sourceEl) => {
+      if (sourceEl.matches('a[href]')) {
+        const href = sourceEl.getAttribute('href');
+        const currentLink = Array.from(sidebar.querySelectorAll('a[href]')).find((link) => link.getAttribute('href') === href);
+        if (currentLink) {
+          currentLink.classList.add('active');
+        }
+        return;
+      }
+
+      if (sourceEl.matches('details.nav-node')) {
+        const path = getDetailsPath(sourceEl);
+        Array.from(sidebar.querySelectorAll('details.nav-node')).forEach((details) => {
+          if (getDetailsPath(details) === path) {
+            details.classList.add('active');
+          }
+        });
+      }
+    });
+
+    bindSidebarPersistence(sidebar);
   }
 
   function rehydrateScripts(container) {
@@ -489,7 +575,7 @@ def render_router_script() -> str:
     }
 
     const sidebarScrollTop = sidebar.scrollTop;
-    sidebar.innerHTML = data.sidebarHtml;
+    syncSidebarState(sidebar, data.sidebarHtml);
     sidebar.scrollTop = sidebarScrollTop;
 
     content.innerHTML = data.contentHtml;
@@ -510,6 +596,7 @@ def render_router_script() -> str:
     const url = new URL(href, window.location.href);
     const key = resolveKey(url);
     const data = PAGE_DATA[key];
+
     if (data) {
       applyPageData(data, url, options);
       return;
@@ -536,6 +623,8 @@ def render_router_script() -> str:
       contentHtml: nextContent.innerHTML,
     }, url, options);
   }
+
+  bindSidebarPersistence(document.querySelector(NAV_SELECTOR));
 
   document.addEventListener('click', (event) => {
     if (isModifiedClick(event)) return;
