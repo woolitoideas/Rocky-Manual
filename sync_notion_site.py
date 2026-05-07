@@ -360,6 +360,7 @@ def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
           <div class="brand-title">Rocky 使用指南</div>
         </div>
       </div>
+      <a class="sidebar-home" href="index.html">指南首頁</a>
       <nav class="nav-tree">{sidebar}</nav>
     </aside>
     <main class="content">
@@ -779,6 +780,7 @@ def render_page(pages: dict[str, dict], page_id: str) -> str:
           <div class="brand-title">Rocky 使用指南</div>
         </div>
       </div>
+      <a class="sidebar-home" href="index.html">指南首頁</a>
       <nav class="nav-tree">{sidebar}</nav>
     </aside>
     <main class="content">
@@ -827,6 +829,8 @@ a:hover { text-decoration: underline; }
 .brand-link { display: inline-flex; flex: 0 0 auto; border-radius: 16px; }
 .brand-icon { width: 48px; height: 48px; border-radius: 16px; display: block; object-fit: cover; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.10); }
 .brand-title { font-weight: 700; letter-spacing: .2px; }
+.sidebar-home { display: inline-flex; align-items: center; justify-content: center; margin: 16px 0 18px; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(125,211,252,.22); background: linear-gradient(180deg, rgba(125,211,252,.18), rgba(125,211,252,.08)); color: var(--text); font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+.sidebar-home:hover { text-decoration: none; border-color: rgba(125,211,252,.42); }
 .sidebar-page-title { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
 .sidebar-current { font-size: 18px; font-weight: 700; line-height: 1.2; margin-top: 8px; }
 .parent-link { display: inline-block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
