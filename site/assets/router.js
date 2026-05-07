@@ -3,7 +3,54 @@
   const CONTENT_SELECTOR = '.content';
   const INTERNAL_EXTENSIONS = ['.html'];
   const STORAGE_KEY = 'rocky-manual-sidebar-open-paths';
+  const COLLAPSED_STORAGE_KEY = 'rocky-manual-sidebar-collapsed';
   const PAGE_DATA = window.ROCKY_MANUAL_PAGES || {};
+
+  function readCollapsedState() {
+    try {
+      return localStorage.getItem(COLLAPSED_STORAGE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function writeCollapsedState(collapsed) {
+    try {
+      localStorage.setItem(COLLAPSED_STORAGE_KEY, collapsed ? '1' : '0');
+    } catch {
+      /* ignore storage errors */
+    }
+  }
+
+  function syncCollapseButton(button, collapsed) {
+    if (!button) return;
+    button.textContent = '☰';
+    button.title = collapsed ? '展開側欄' : '收合側欄';
+    button.setAttribute('aria-label', collapsed ? '展開側欄' : '收合側欄');
+    button.setAttribute('aria-expanded', String(!collapsed));
+  }
+
+  function applyCollapsedState(collapsed) {
+    document.body.classList.toggle('sidebar-collapsed', collapsed);
+    syncCollapseButton(document.querySelector('.sidebar-toggle'), collapsed);
+  }
+
+  function toggleCollapsedState() {
+    const collapsed = !document.body.classList.contains('sidebar-collapsed');
+    writeCollapsedState(collapsed);
+    applyCollapsedState(collapsed);
+  }
+
+  function bindSidebarToggle() {
+    const button = document.querySelector('.sidebar-toggle');
+    if (!button || button.dataset.sidebarToggleBound === '1') return;
+    button.dataset.sidebarToggleBound = '1';
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      toggleCollapsedState();
+    });
+    applyCollapsedState(readCollapsedState());
+  }
 
   function isModifiedClick(event) {
     return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
@@ -181,6 +228,7 @@
     }, url, options);
   }
 
+  bindSidebarToggle();
   bindSidebarPersistence(document.querySelector(NAV_SELECTOR));
 
   document.addEventListener('click', (event) => {

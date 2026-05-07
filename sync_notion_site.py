@@ -352,13 +352,16 @@ def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand">
-        <a class="brand-link" href="index.html" aria-label="回到首頁">
-          <img class="brand-icon" src="assets/media/rocky-home-icon.jpeg" alt="Rocky 使用指南" />
-        </a>
-        <div>
-          <div class="brand-title">Rocky 使用指南</div>
+      <div class="sidebar-head">
+        <div class="brand">
+          <a class="brand-link" href="index.html" aria-label="回到首頁">
+            <img class="brand-icon" src="assets/media/rocky-home-icon.jpeg" alt="Rocky 使用指南" />
+          </a>
+          <div>
+            <div class="brand-title">Rocky 使用指南</div>
+          </div>
         </div>
+        <button class="sidebar-toggle" type="button" aria-expanded="true" aria-label="收合側欄" title="收合側欄">☰</button>
       </div>
       <a class="sidebar-home" href="index.html">指南首頁</a>
       <nav class="nav-tree">{sidebar}</nav>
@@ -447,7 +450,54 @@ def render_router_script() -> str:
   const CONTENT_SELECTOR = '.content';
   const INTERNAL_EXTENSIONS = ['.html'];
   const STORAGE_KEY = 'rocky-manual-sidebar-open-paths';
+  const COLLAPSED_STORAGE_KEY = 'rocky-manual-sidebar-collapsed';
   const PAGE_DATA = window.ROCKY_MANUAL_PAGES || {};
+
+  function readCollapsedState() {
+    try {
+      return localStorage.getItem(COLLAPSED_STORAGE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function writeCollapsedState(collapsed) {
+    try {
+      localStorage.setItem(COLLAPSED_STORAGE_KEY, collapsed ? '1' : '0');
+    } catch {
+      /* ignore storage errors */
+    }
+  }
+
+  function syncCollapseButton(button, collapsed) {
+    if (!button) return;
+    button.textContent = '☰';
+    button.title = collapsed ? '展開側欄' : '收合側欄';
+    button.setAttribute('aria-label', collapsed ? '展開側欄' : '收合側欄');
+    button.setAttribute('aria-expanded', String(!collapsed));
+  }
+
+  function applyCollapsedState(collapsed) {
+    document.body.classList.toggle('sidebar-collapsed', collapsed);
+    syncCollapseButton(document.querySelector('.sidebar-toggle'), collapsed);
+  }
+
+  function toggleCollapsedState() {
+    const collapsed = !document.body.classList.contains('sidebar-collapsed');
+    writeCollapsedState(collapsed);
+    applyCollapsedState(collapsed);
+  }
+
+  function bindSidebarToggle() {
+    const button = document.querySelector('.sidebar-toggle');
+    if (!button || button.dataset.sidebarToggleBound === '1') return;
+    button.dataset.sidebarToggleBound = '1';
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      toggleCollapsedState();
+    });
+    applyCollapsedState(readCollapsedState());
+  }
 
   function isModifiedClick(event) {
     return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
@@ -625,6 +675,7 @@ def render_router_script() -> str:
     }, url, options);
   }
 
+  bindSidebarToggle();
   bindSidebarPersistence(document.querySelector(NAV_SELECTOR));
 
   document.addEventListener('click', (event) => {
@@ -772,13 +823,16 @@ def render_page(pages: dict[str, dict], page_id: str) -> str:
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand">
-        <a class="brand-link" href="index.html" aria-label="回到首頁">
-          <img class="brand-icon" src="assets/media/rocky-home-icon.jpeg" alt="Rocky 使用指南" />
-        </a>
-        <div>
-          <div class="brand-title">Rocky 使用指南</div>
+      <div class="sidebar-head">
+        <div class="brand">
+          <a class="brand-link" href="index.html" aria-label="回到首頁">
+            <img class="brand-icon" src="assets/media/rocky-home-icon.jpeg" alt="Rocky 使用指南" />
+          </a>
+          <div>
+            <div class="brand-title">Rocky 使用指南</div>
+          </div>
         </div>
+        <button class="sidebar-toggle" type="button" aria-expanded="true" aria-label="收合側欄" title="收合側欄">☰</button>
       </div>
       <a class="sidebar-home" href="index.html">指南首頁</a>
       <nav class="nav-tree">{sidebar}</nav>
@@ -823,15 +877,29 @@ def build_assets() -> None:
 html, body { margin: 0; min-height: 100%; background: radial-gradient(circle at top left, #15203a 0, #0b1020 34%, #090d17 100%); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
-.app-shell { display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; }
-.sidebar { position: sticky; top: 0; height: 100vh; overflow: auto; background: linear-gradient(180deg, rgba(8,12,24,.95), rgba(9,14,28,.88)); border-right: 1px solid var(--line); padding: 20px 16px; backdrop-filter: blur(16px); }
-.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.app-shell { display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; transition: grid-template-columns .2s ease; }
+.sidebar { position: sticky; top: 0; height: 100vh; overflow: auto; background: linear-gradient(180deg, rgba(8,12,24,.95), rgba(9,14,28,.88)); border-right: 1px solid var(--line); padding: 20px 16px; backdrop-filter: blur(16px); transition: padding .2s ease; }
+.sidebar-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.brand { display: flex; align-items: center; gap: 12px; }
 .brand-link { display: inline-flex; flex: 0 0 auto; border-radius: 16px; }
 .brand-icon { width: 48px; height: 48px; border-radius: 16px; display: block; object-fit: cover; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.10); }
 .brand-title { font-weight: 700; letter-spacing: .2px; }
+.sidebar-toggle { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px; border: 1px solid rgba(125,211,252,.18); background: rgba(5, 8, 22, 0.84); color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; transition: transform .15s ease, border-color .15s ease, background .15s ease; }
+.sidebar-toggle:hover { transform: translateY(-1px); border-color: rgba(125,211,252,.42); background: rgba(125,211,252,.10); }
 .sidebar-home { display: inline-flex; align-items: center; justify-content: center; margin: 16px 0 18px; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(125,211,252,.22); background: linear-gradient(180deg, rgba(125,211,252,.18), rgba(125,211,252,.08)); color: var(--text); font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
-.sidebar-home:hover { text-decoration: none; border-color: rgba(125,211,252,.42); }
-.sidebar-page-title { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+body.sidebar-collapsed .app-shell { grid-template-columns: 72px 1fr; }
+body.sidebar-collapsed .sidebar { padding: 16px 10px; }
+body.sidebar-collapsed .sidebar-head { justify-content: center; }
+body.sidebar-collapsed .brand { display: none; }
+body.sidebar-collapsed .brand-title,
+body.sidebar-collapsed .sidebar-home,
+body.sidebar-collapsed .nav-tree,
+body.sidebar-collapsed .sidebar-page-title,
+body.sidebar-collapsed .parent-link,
+body.sidebar-collapsed .empty-nav { display: none; }
+body.sidebar-collapsed .brand { justify-content: center; }
+body.sidebar-collapsed .brand-link { margin: 0; }
+body.sidebar-collapsed .sidebar-toggle { margin-left: 0; }
 .sidebar-current { font-size: 18px; font-weight: 700; line-height: 1.2; margin-top: 8px; }
 .parent-link { display: inline-block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
 .empty-nav { color: var(--muted); font-size: 13px; padding: 8px 2px; }
