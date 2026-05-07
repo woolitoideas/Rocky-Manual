@@ -22,17 +22,26 @@
     }
   }
 
-  function syncCollapseButton(button, collapsed) {
-    if (!button) return;
-    button.textContent = '☰';
-    button.title = collapsed ? '展開側欄' : '收合側欄';
-    button.setAttribute('aria-label', collapsed ? '展開側欄' : '收合側欄');
-    button.setAttribute('aria-expanded', String(!collapsed));
+  function syncSidebarToggleButtons(collapsed) {
+    const collapseButton = document.querySelector('.sidebar-collapse-toggle');
+    const expandButton = document.querySelector('.sidebar-expand-toggle');
+    if (collapseButton) {
+      collapseButton.hidden = collapsed;
+      collapseButton.setAttribute('aria-expanded', 'true');
+      collapseButton.setAttribute('aria-label', '收合側欄');
+      collapseButton.title = '收合側欄';
+    }
+    if (expandButton) {
+      expandButton.hidden = !collapsed;
+      expandButton.setAttribute('aria-expanded', 'false');
+      expandButton.setAttribute('aria-label', '展開側欄');
+      expandButton.title = '展開側欄';
+    }
   }
 
   function applyCollapsedState(collapsed) {
     document.body.classList.toggle('sidebar-collapsed', collapsed);
-    syncCollapseButton(document.querySelector('.sidebar-toggle'), collapsed);
+    syncSidebarToggleButtons(collapsed);
   }
 
   function toggleCollapsedState() {
@@ -42,13 +51,22 @@
   }
 
   function bindSidebarToggle() {
-    const button = document.querySelector('.sidebar-toggle');
-    if (!button || button.dataset.sidebarToggleBound === '1') return;
-    button.dataset.sidebarToggleBound = '1';
-    button.addEventListener('click', (event) => {
-      event.preventDefault();
-      toggleCollapsedState();
-    });
+    const collapseButton = document.querySelector('.sidebar-collapse-toggle');
+    const expandButton = document.querySelector('.sidebar-expand-toggle');
+    if (collapseButton && collapseButton.dataset.sidebarToggleBound !== '1') {
+      collapseButton.dataset.sidebarToggleBound = '1';
+      collapseButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        toggleCollapsedState();
+      });
+    }
+    if (expandButton && expandButton.dataset.sidebarToggleBound !== '1') {
+      expandButton.dataset.sidebarToggleBound = '1';
+      expandButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        toggleCollapsedState();
+      });
+    }
     applyCollapsedState(readCollapsedState());
   }
 

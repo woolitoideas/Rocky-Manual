@@ -361,7 +361,8 @@ def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
             <div class="brand-title">Rocky 使用指南</div>
           </div>
         </div>
-        <button class="sidebar-toggle" type="button" aria-expanded="true" aria-label="收合側欄" title="收合側欄">☰</button>
+        <button class="sidebar-toggle sidebar-collapse-toggle" type="button" aria-expanded="true" aria-label="收合側欄" title="收合側欄">❮</button>
+        <button class="sidebar-toggle sidebar-expand-toggle" type="button" aria-expanded="false" aria-label="展開側欄" title="展開側欄" hidden>☰</button>
       </div>
       <a class="sidebar-home" href="index.html">指南首頁</a>
       <nav class="nav-tree">{sidebar}</nav>
@@ -469,17 +470,26 @@ def render_router_script() -> str:
     }
   }
 
-  function syncCollapseButton(button, collapsed) {
-    if (!button) return;
-    button.textContent = '☰';
-    button.title = collapsed ? '展開側欄' : '收合側欄';
-    button.setAttribute('aria-label', collapsed ? '展開側欄' : '收合側欄');
-    button.setAttribute('aria-expanded', String(!collapsed));
+  function syncSidebarToggleButtons(collapsed) {
+    const collapseButton = document.querySelector('.sidebar-collapse-toggle');
+    const expandButton = document.querySelector('.sidebar-expand-toggle');
+    if (collapseButton) {
+      collapseButton.hidden = collapsed;
+      collapseButton.setAttribute('aria-expanded', 'true');
+      collapseButton.setAttribute('aria-label', '收合側欄');
+      collapseButton.title = '收合側欄';
+    }
+    if (expandButton) {
+      expandButton.hidden = !collapsed;
+      expandButton.setAttribute('aria-expanded', 'false');
+      expandButton.setAttribute('aria-label', '展開側欄');
+      expandButton.title = '展開側欄';
+    }
   }
 
   function applyCollapsedState(collapsed) {
     document.body.classList.toggle('sidebar-collapsed', collapsed);
-    syncCollapseButton(document.querySelector('.sidebar-toggle'), collapsed);
+    syncSidebarToggleButtons(collapsed);
   }
 
   function toggleCollapsedState() {
@@ -489,13 +499,22 @@ def render_router_script() -> str:
   }
 
   function bindSidebarToggle() {
-    const button = document.querySelector('.sidebar-toggle');
-    if (!button || button.dataset.sidebarToggleBound === '1') return;
-    button.dataset.sidebarToggleBound = '1';
-    button.addEventListener('click', (event) => {
-      event.preventDefault();
-      toggleCollapsedState();
-    });
+    const collapseButton = document.querySelector('.sidebar-collapse-toggle');
+    const expandButton = document.querySelector('.sidebar-expand-toggle');
+    if (collapseButton && collapseButton.dataset.sidebarToggleBound !== '1') {
+      collapseButton.dataset.sidebarToggleBound = '1';
+      collapseButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        toggleCollapsedState();
+      });
+    }
+    if (expandButton && expandButton.dataset.sidebarToggleBound !== '1') {
+      expandButton.dataset.sidebarToggleBound = '1';
+      expandButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        toggleCollapsedState();
+      });
+    }
     applyCollapsedState(readCollapsedState());
   }
 
@@ -832,7 +851,8 @@ def render_page(pages: dict[str, dict], page_id: str) -> str:
             <div class="brand-title">Rocky 使用指南</div>
           </div>
         </div>
-        <button class="sidebar-toggle" type="button" aria-expanded="true" aria-label="收合側欄" title="收合側欄">☰</button>
+        <button class="sidebar-toggle sidebar-collapse-toggle" type="button" aria-expanded="true" aria-label="收合側欄" title="收合側欄">❮</button>
+        <button class="sidebar-toggle sidebar-expand-toggle" type="button" aria-expanded="false" aria-label="展開側欄" title="展開側欄" hidden>☰</button>
       </div>
       <a class="sidebar-home" href="index.html">指南首頁</a>
       <nav class="nav-tree">{sidebar}</nav>
@@ -878,28 +898,31 @@ html, body { margin: 0; min-height: 100%; background: radial-gradient(circle at 
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 .app-shell { display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; transition: grid-template-columns .2s ease; }
-.sidebar { position: sticky; top: 0; height: 100vh; overflow: auto; background: linear-gradient(180deg, rgba(8,12,24,.95), rgba(9,14,28,.88)); border-right: 1px solid var(--line); padding: 20px 16px; backdrop-filter: blur(16px); transition: padding .2s ease; }
+.sidebar { position: sticky; top: 0; height: 100vh; overflow: auto; background: linear-gradient(180deg, rgba(8,12,24,.95), rgba(9,14,28,.88)); border-right: 1px solid var(--line); padding: 20px 16px; backdrop-filter: blur(16px); transition: padding .2s ease; position: sticky; }
 .sidebar-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand-link { display: inline-flex; flex: 0 0 auto; border-radius: 16px; }
 .brand-icon { width: 48px; height: 48px; border-radius: 16px; display: block; object-fit: cover; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.10); }
 .brand-title { font-weight: 700; letter-spacing: .2px; }
-.sidebar-toggle { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px; border: 1px solid rgba(125,211,252,.18); background: rgba(5, 8, 22, 0.84); color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; transition: transform .15s ease, border-color .15s ease, background .15s ease; }
+.sidebar-toggle { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px; border: 1px solid rgba(125,211,252,.18); background: rgba(5, 8, 22, 0.84); color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; transition: transform .15s ease, border-color .15s ease, background .15s ease, opacity .15s ease; }
 .sidebar-toggle:hover { transform: translateY(-1px); border-color: rgba(125,211,252,.42); background: rgba(125,211,252,.10); }
+.sidebar-collapse-toggle { position: absolute; top: 50%; right: -18px; transform: translateY(-50%); z-index: 3; border-radius: 999px; width: 36px; height: 48px; box-shadow: 0 10px 28px rgba(0,0,0,.28); }
+.sidebar-collapse-toggle:hover { transform: translateY(-50%) translateX(1px); }
+.sidebar-expand-toggle { display: none; }
 .sidebar-home { display: inline-flex; align-items: center; justify-content: center; margin: 16px 0 18px; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(125,211,252,.22); background: linear-gradient(180deg, rgba(125,211,252,.18), rgba(125,211,252,.08)); color: var(--text); font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+.sidebar-home:hover { text-decoration: none; border-color: rgba(125,211,252,.42); }
 body.sidebar-collapsed .app-shell { grid-template-columns: 72px 1fr; }
 body.sidebar-collapsed .sidebar { padding: 16px 10px; }
 body.sidebar-collapsed .sidebar-head { justify-content: center; }
 body.sidebar-collapsed .brand { display: none; }
-body.sidebar-collapsed .brand-title,
 body.sidebar-collapsed .sidebar-home,
 body.sidebar-collapsed .nav-tree,
 body.sidebar-collapsed .sidebar-page-title,
 body.sidebar-collapsed .parent-link,
 body.sidebar-collapsed .empty-nav { display: none; }
-body.sidebar-collapsed .brand { justify-content: center; }
-body.sidebar-collapsed .brand-link { margin: 0; }
-body.sidebar-collapsed .sidebar-toggle { margin-left: 0; }
+body.sidebar-collapsed .sidebar-collapse-toggle { display: none; }
+body.sidebar-collapsed .sidebar-expand-toggle { display: inline-flex; position: static; transform: none; width: 40px; height: 40px; border-radius: 12px; box-shadow: none; }
+body.sidebar-collapsed .sidebar-expand-toggle:hover { transform: translateY(-1px); }
 .sidebar-current { font-size: 18px; font-weight: 700; line-height: 1.2; margin-top: 8px; }
 .parent-link { display: inline-block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
 .empty-nav { color: var(--muted); font-size: 13px; padding: 8px 2px; }
