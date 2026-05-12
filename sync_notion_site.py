@@ -365,7 +365,10 @@ def render_skill_catalog_page(page_id: str, pages: dict[str, dict]) -> str:
         <button class="sidebar-toggle sidebar-collapse-toggle" type="button" aria-expanded="true" aria-label="收合側欄" title="收合側欄"><svg class="sidebar-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5L8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button class="sidebar-toggle sidebar-expand-toggle" type="button" aria-expanded="false" aria-label="展開側欄" title="展開側欄" hidden><svg class="sidebar-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button>
       </div>
-      <a class="sidebar-home" href="index.html">指南首頁</a>
+      <div class="sidebar-home-row">
+        <a class="sidebar-home" href="index.html">指南首頁</a>
+        <a class="sidebar-notion" href="https://www.notion.so/Rocky-3589711f527180cdbe7fee7a34418b70?source=copy_link" target="_blank" rel="noreferrer noopener">Notion 版</a>
+      </div>
       <nav class="nav-tree">{sidebar}</nav>
     </aside>
     <main class="content">
@@ -856,7 +859,10 @@ def render_page(pages: dict[str, dict], page_id: str) -> str:
         <button class="sidebar-toggle sidebar-collapse-toggle" type="button" aria-expanded="true" aria-label="收合側欄" title="收合側欄"><svg class="sidebar-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5L8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button class="sidebar-toggle sidebar-expand-toggle" type="button" aria-expanded="false" aria-label="展開側欄" title="展開側欄" hidden><svg class="sidebar-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button>
       </div>
-      <a class="sidebar-home" href="index.html">指南首頁</a>
+      <div class="sidebar-home-row">
+        <a class="sidebar-home" href="index.html">指南首頁</a>
+        <a class="sidebar-notion" href="https://www.notion.so/Rocky-3589711f527180cdbe7fee7a34418b70?source=copy_link" target="_blank" rel="noreferrer noopener">Notion 版</a>
+      </div>
       <nav class="nav-tree">{sidebar}</nav>
     </aside>
     <main class="content">
@@ -913,13 +919,17 @@ a:hover { text-decoration: underline; }
 .sidebar-collapse-toggle .sidebar-toggle-icon { width: 12px; height: 12px; }
 .sidebar-collapse-toggle:hover { transform: translateY(-50%) translateX(1px); }
 .sidebar-expand-toggle { display: none; }
-.sidebar-home { display: inline-flex; align-items: center; justify-content: center; margin: 16px 0 18px; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(125,211,252,.22); background: linear-gradient(180deg, rgba(125,211,252,.18), rgba(125,211,252,.08)); color: var(--text); font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+.sidebar-home-row { display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; margin: 16px 0 18px; }
+.sidebar-home, .sidebar-notion { display: inline-flex; align-items: center; justify-content: center; padding: 10px 14px; border-radius: 14px; color: var(--text); font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+.sidebar-home { border: 1px solid rgba(125,211,252,.22); background: linear-gradient(180deg, rgba(125,211,252,.18), rgba(125,211,252,.08)); }
 .sidebar-home:hover { text-decoration: none; border-color: rgba(125,211,252,.42); }
+.sidebar-notion { border: 1px solid rgba(167,139,250,.24); background: linear-gradient(180deg, rgba(167,139,250,.18), rgba(167,139,250,.08)); }
+.sidebar-notion:hover { text-decoration: none; border-color: rgba(167,139,250,.46); }
 body.sidebar-collapsed .app-shell { grid-template-columns: 72px 1fr; }
 body.sidebar-collapsed .sidebar { padding: 16px 10px; }
 body.sidebar-collapsed .sidebar-head { justify-content: center; }
 body.sidebar-collapsed .brand { display: none; }
-body.sidebar-collapsed .sidebar-home,
+body.sidebar-collapsed .sidebar-home-row,
 body.sidebar-collapsed .nav-tree,
 body.sidebar-collapsed .sidebar-page-title,
 body.sidebar-collapsed .parent-link,

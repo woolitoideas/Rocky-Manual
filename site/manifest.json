@@ -1,6 +1,6 @@
 {
   "root_page_id": "3589711f527180cdbe7fee7a34418b70",
-  "generated_at": "2026-05-12T01:01:22.659823Z",
+  "generated_at": "2026-05-12T04:17:31.698728Z",
   "pages": [
     {
       "id": "3589711f527180cdbe7fee7a34418b70",
@@ -111,6 +111,30 @@
         {
           "id": "3589711f5271800da7cff07587b211b8",
           "title": "建立專案"
+        },
+        {
+          "id": "35e9711f5271802ab389c11e9d35b68c",
+          "title": "建立旁白腳本"
+        },
+        {
+          "id": "35e9711f527180bead41ea1d180fc3c9",
+          "title": "建立文字分鏡"
+        },
+        {
+          "id": "35e9711f52718082a8b5d435a628a0ad",
+          "title": "建立分鏡圖片"
+        },
+        {
+          "id": "35e9711f52718047acf1c37529e0d5a7",
+          "title": "修改分鏡"
+        },
+        {
+          "id": "35e9711f5271804fbe84e6cdfd1b4386",
+          "title": "建立美術"
+        },
+        {
+          "id": "35e9711f527180c2933adbe4e1609da8",
+          "title": "建立動態"
         }
       ]
     },
@@ -127,25 +151,51 @@
       "child_pages": []
     },
     {
+      "id": "35e9711f5271802ab389c11e9d35b68c",
+      "title": "建立旁白腳本",
+      "filename": "page-c11e9d35b68c.html",
+      "child_pages": []
+    },
+    {
+      "id": "35e9711f527180bead41ea1d180fc3c9",
+      "title": "建立文字分鏡",
+      "filename": "page-ea1d180fc3c9.html",
+      "child_pages": []
+    },
+    {
+      "id": "35e9711f52718082a8b5d435a628a0ad",
+      "title": "建立分鏡圖片",
+      "filename": "page-d435a628a0ad.html",
+      "child_pages": []
+    },
+    {
+      "id": "35e9711f52718047acf1c37529e0d5a7",
+      "title": "修改分鏡",
+      "filename": "page-c37529e0d5a7.html",
+      "child_pages": []
+    },
+    {
+      "id": "35e9711f5271804fbe84e6cdfd1b4386",
+      "title": "建立美術",
+      "filename": "page-e6cdfd1b4386.html",
+      "child_pages": []
+    },
+    {
+      "id": "35e9711f527180c2933adbe4e1609da8",
+      "title": "建立動態",
+      "filename": "page-dbe4e1609da8.html",
+      "child_pages": []
+    },
+    {
       "id": "35a9711f527180bf8203c86b975255bf",
       "title": "標案專區",
       "filename": "page-c86b975255bf.html",
       "child_pages": [
         {
-          "id": "35a9711f527180a0b8d4ca93ef9968c6",
-          "title": ""
-        },
-        {
           "id": "35a9711f527180b28b13f2314fcf362f",
           "title": "標案專區說明"
         }
       ]
-    },
-    {
-      "id": "35a9711f527180a0b8d4ca93ef9968c6",
-      "title": "",
-      "filename": "page-ca93ef9968c6.html",
-      "child_pages": []
     },
     {
       "id": "35a9711f527180b28b13f2314fcf362f",

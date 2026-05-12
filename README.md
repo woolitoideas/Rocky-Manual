@@ -4,6 +4,7 @@
 
 ## 功能
 - 左側樹狀欄：子頁標題
+- 左上角有「指南首頁」與「Notion 版」快捷按鈕
 - 可展開 / 收合多層子頁
 - 每個 Notion page 都會輸出成靜態 HTML
 - 圖片會下載到 `site/assets/media/`
