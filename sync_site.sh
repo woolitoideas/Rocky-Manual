@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="/mnt/d/Woolito Animation Dropbox/0_Woolito Animation Team Folder/Rocky/Manual"
+ROOT_DIR="D:/Woolito Animation Dropbox/0_Woolito Animation Team Folder/Rocky/Manual"
 cd "$ROOT_DIR"
 
 export PATH="$HOME/.local/bin:$PATH"
